@@ -76,7 +76,7 @@ namespace FileComparator
         private void compareBtn_Click(object sender, EventArgs e)
         {
             Result analysisResult = new Result();
-            int j = 0;
+            /*int j = 0;
             for (int i = 0; i < originalText.Count; i++)
             {
                 try
@@ -130,7 +130,8 @@ namespace FileComparator
                         break;
                     }
                 }
-            }
+            }*/
+            analysisResult = CompareFiles(originalText, modifiedText);
             Form ResultForm = new Form2(analysisResult);
             ResultForm.Show();
             //analysisResult.Clear();
@@ -157,7 +158,8 @@ namespace FileComparator
             {
                 int minCount = Math.Min(org.Count, mod.Count);
                 int j = 0;
-                for (int i = 0; i < minCount-1; i++)                         //Проходим до последней строки наименьшего из файлов
+                int i;
+                for (i =0; i < minCount-1; i++)                             //Проходим ДО последней строки наименьшего из файлов
                 {
                     if (org[i] == mod[j])                                    //не изменяли строку
                     {
@@ -187,17 +189,58 @@ namespace FileComparator
                     }
                 }
 
-                if (org.Count == mod.Count)                                     //если кол-во строк одинаково          
+                if (org.Count == mod.Count)                                     //если осталось по одной строчке в файлах         
                 {
-                    //TODO
+                    if (org[i] == mod[j])  result.AddLine(org[i], Color.Green);
+                    else
+                    {
+                        result.AddLine(org[i], Color.Red);
+                        result.AddLine(mod[j], Color.Yellow);
+                    }
                 }
                 else if (org.Count > mod.Count)                                 //если в оригинале строк больше
                 {
-                    
+                    if (org[i + 1] == mod[j])                                   //удалили строку
+                    {
+                        result.AddLine(org[i], Color.Red);
+                        result.AddLine(org[i+1], Color.Green);
+                        i += 2;                        
+                    }
+                    else                                                        //изменили строку
+                    {
+                        result.AddLine(org[i], Color.Red);
+                        result.AddLine(mod[j], Color.Yellow);
+                        j += 1;
+                    }
+                    if (i < org.Count)
+                    {
+                        for (int k = i; k < org.Count; k++)
+                        {
+                            result.AddLine(org[k], Color.Red);
+                        }
+                    }
                 }
                 else                                                            //если в орининале строк меньше
                 {
-
+                    if (org[i] == mod[j + 1])                              //добавили строку
+                    {
+                        result.AddLine(mod[j], Color.Yellow);
+                        result.AddLine(org[i], Color.Green);
+                        j += 2;                        
+                    }
+                    else                                                   //изменили строку
+                    {
+                        result.AddLine(org[i], Color.Red);
+                        result.AddLine(mod[j], Color.Yellow);
+                        j += 1;
+                    }
+                    if (i < mod.Count)
+                    {
+                        for (int k = j; k < mod.Count; k++)
+                        {
+                            result.AddLine(mod[k], Color.Yellow);
+                        }
+                    }
                 }
             }
             return result;
