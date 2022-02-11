@@ -189,7 +189,7 @@ namespace FileComparator
 
                 if (org.Count == mod.Count)                                     //если кол-во строк одинаково          
                 {
-
+                    //TODO
                 }
                 else if (org.Count > mod.Count)                                 //если в оригинале строк больше
                 {
