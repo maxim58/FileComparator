@@ -18,7 +18,7 @@ namespace FileComparator
 
         }
 
-        public Form2(Result analysisResult)
+        public Form2(Result analysisResult, TimeSpan runtime)
         {
             InitializeComponent();
             int startIndex = 0;
@@ -32,6 +32,14 @@ namespace FileComparator
                     ResultTextBox.SelectionLength = 0;
                     startIndex += analysisResult.GetLineAt(i).Length + 1;
                 }
+
+                orgLineCountLable.Text = analysisResult.OrgLinesCount.ToString();
+                modLineCountLabel.Text = analysisResult.ModLinesCount.ToString();
+                linesUnchangedLabel.Text = analysisResult.LinesUnchangedCount.ToString();
+                removalsLabel.Text = analysisResult.RemovalsCount.ToString();
+                additionsLabel.Text = analysisResult.AdditionsCount.ToString();
+                changesLabel.Text = analysisResult.ChangesCount.ToString();
+                runtimeLabel.Text = runtime.TotalMilliseconds.ToString();
             }
             catch (Exception ex)
             {
@@ -42,7 +50,6 @@ namespace FileComparator
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //ResultTextBox.Clear();
             this.Close();
         }
     }

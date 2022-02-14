@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -76,171 +77,78 @@ namespace FileComparator
         private void compareBtn_Click(object sender, EventArgs e)
         {
             Result analysisResult = new Result();
-            /*int j = 0;
-            for (int i = 0; i < originalText.Count; i++)
-            {
-                try
-                {
-                    if (originalText[i] == modifiedText[j])                                    //не изменяли строку
-                    {
-                        analysisResult.AddLine(originalText[i], Color.Green);
-                        j += 1;
-                    }
-                    else
-                    {
-                   
-                        if (originalText[i] == modifiedText[j + 1])                              //добавили строку
-                        {
-                            analysisResult.AddLine(modifiedText[j], Color.Yellow);
-                            analysisResult.AddLine(originalText[i], Color.Green);
-                            j += 2;
-                        }
-                        else if (originalText[i + 1] == modifiedText[j])                         //удалили строку
-                        {
-                            analysisResult.AddLine(originalText[i], Color.Red);
-                        }
-                        else                                                                     //изменили строку
-                        {
-                            analysisResult.AddLine(originalText[i], Color.Red);
-                            analysisResult.AddLine(modifiedText[j], Color.Yellow);
-                            j += 1;
-                        }
-                    
-                    }
-                }
-                catch (ArgumentOutOfRangeException)
-                {
-                    if (i + 1 == originalText.Count)
-                    {
-                        analysisResult.AddLine(originalText[i], Color.Red);
-                        analysisResult.AddLine(modifiedText[j], Color.Yellow);
-                        for (int k = j+1; k < modifiedText.Count; k++)
-                        {
-                            analysisResult.AddLine(modifiedText[k], Color.Yellow);
-                        }
-                    }
-                    else if (j + 1 == modifiedText.Count)
-                    {
-                        analysisResult.AddLine(originalText[i], Color.Red);
-                        analysisResult.AddLine(modifiedText[j], Color.Yellow);
-                        for (int k = i+1; k < modifiedText.Count; k++)
-                        {
-                            analysisResult.AddLine(originalText[k], Color.Red);
-                        }
-                        break;
-                    }
-                }
-            }*/
-            analysisResult = CompareFiles(originalText, modifiedText);
-            Form ResultForm = new Form2(analysisResult);
+           
+            Stopwatch sw = new Stopwatch();
+            sw.Start();                                                                     //засекаем время сравнения файлов
+            analysisResult = CompareFiles(originalText, modifiedText);                      //сравниваем 2 файла
+            sw.Stop();            
+            Form ResultForm = new Form2(analysisResult, sw.Elapsed);                        //передаем результаты сравнения на форму2
             ResultForm.Show();
-            //analysisResult.Clear();
         }
 
-        private Result CompareFiles(List<string> org, List<string> mod)
+        private Result CompareFiles(List<string> original, List<string> modified)
         {
+            List<string> org = new List<string>();
+            org.AddRange(original.ToArray());
+            List<string> mod = new List<string>();
+            mod.AddRange(modified.ToArray());
+
             Result result = new Result();
-            if (org.Count != 0 && mod.Count == 0)                             //Если измененный файл пустой
+            result.OrgLinesCount = org.Count;
+            result.ModLinesCount = mod.Count;
+
+            while (org.Count != 0)
             {
-                foreach (string line in org)
+                if (org.First() == mod.First())                                                         //если строки равны, значит не изменяли 
                 {
-                    result.AddLine(line, Color.Red);                            //Выводим все строги оригинала красным
+                    result.AddLine(org.First(), Color.Green);
+                    result.LinesUnchangedCount++;
+                    org.RemoveAt(0);
+                    mod.RemoveAt(0);
                 }
-            }
-            else if (org.Count == 0 && mod.Count != 0)                        //Если оригинальный файл пустой
-            {
-                foreach(string line in mod)
+                else                                                                                    //если строки не равны...
                 {
-                    result.AddLine(line, Color.Yellow);                          //Выводим все строки измененного файла желтым
-                }
-            }
-            else                                                              //Если оба файлы не пустые
-            {
-                int minCount = Math.Min(org.Count, mod.Count);
-                int j = 0;
-                int i;
-                for (i =0; i < minCount-1; i++)                             //Проходим ДО последней строки наименьшего из файлов
-                {
-                    if (org[i] == mod[j])                                    //не изменяли строку
-                    {
-                        result.AddLine(org[i], Color.Green);
-                        j += 1;
+                    if (!mod.Contains(org.First()) && org.Contains(mod.First()))                        //если нет строки из оригинального файла в измененном файле
+                    {                                                                                   //но есть строка из измененного файла в оригинальном
+                        result.AddLine(org.First(), Color.Red);                                         //значит строку удалили
+                        result.RemovalsCount++;
+                        org.RemoveAt(0);
+                    }
+                    else if(!mod.Contains(org.First()) && !org.Contains(mod.First()))                   //если нет строки из оригинального файла в измененном файле
+                    {                                                                                   //и нет строки из измененного файла в оригинальном
+                        result.AddLine(org.First(), Color.Red);                                         //значит строку изменили
+                        result.AddLine(mod.First(), Color.Yellow);
+                        result.ChangesCount++;
+                        org.RemoveAt(0);
+                        mod.RemoveAt(0);
                     }
                     else
-                    {
-
-                        if (org[i] == mod[j + 1])                              //добавили строку
-                        {
-                            result.AddLine(mod[j], Color.Yellow);
-                            result.AddLine(org[i], Color.Green);
-                            j += 2;
-                        }
-                        else if (org[i + 1] == mod[j])                         //удалили строку
-                        {
-                            result.AddLine(org[i], Color.Red);
-                        }
-                        else                                                   //изменили строку
-                        {
-                            result.AddLine(org[i], Color.Red);
-                            result.AddLine(mod[j], Color.Yellow);
-                            j += 1;
-                        }
-
+                    {                                                                                   //если есть строка из оригинального файла в измененном файле
+                        result.AddLine(mod.First(), Color.Yellow);                                      //и есть строка из измененного файла в оригинальном
+                        result.AdditionsCount++;                                                        //значит строку добавили
+                        mod.RemoveAt(0);
                     }
                 }
 
-                if (org.Count == mod.Count)                                     //если осталось по одной строчке в файлах         
-                {
-                    if (org[i] == mod[j])  result.AddLine(org[i], Color.Green);
-                    else
+                if (mod.Count == 0)                                                                     //если измененный файл закончился раньше, 
+                {                                                                                       //допечатываем строки из оригинального, как удаленные
+                    while (org.Count != 0)
                     {
-                        result.AddLine(org[i], Color.Red);
-                        result.AddLine(mod[j], Color.Yellow);
+                        result.AddLine(org.First(), Color.Red);
+                        result.RemovalsCount++;
+                        org.RemoveAt(0);
                     }
+                    break;
                 }
-                else if (org.Count > mod.Count)                                 //если в оригинале строк больше
-                {
-                    if (org[i + 1] == mod[j])                                   //удалили строку
+                else if (org.Count == 0 && mod.Count != 0)                                              //если оригинальный файл закончился раньше,
+                {                                                                                       //допечатываем строки из измененного, как добавленные
+                    while (mod.Count != 0)
                     {
-                        result.AddLine(org[i], Color.Red);
-                        result.AddLine(org[i+1], Color.Green);
-                        i += 2;                        
+                        result.AddLine(mod.First(), Color.Yellow);
+                        result.AdditionsCount++;
+                        mod.RemoveAt(0);
                     }
-                    else                                                        //изменили строку
-                    {
-                        result.AddLine(org[i], Color.Red);
-                        result.AddLine(mod[j], Color.Yellow);
-                        j += 1;
-                    }
-                    if (i < org.Count)
-                    {
-                        for (int k = i; k < org.Count; k++)
-                        {
-                            result.AddLine(org[k], Color.Red);
-                        }
-                    }
-                }
-                else                                                            //если в орининале строк меньше
-                {
-                    if (org[i] == mod[j + 1])                              //добавили строку
-                    {
-                        result.AddLine(mod[j], Color.Yellow);
-                        result.AddLine(org[i], Color.Green);
-                        j += 2;                        
-                    }
-                    else                                                   //изменили строку
-                    {
-                        result.AddLine(org[i], Color.Red);
-                        result.AddLine(mod[j], Color.Yellow);
-                        j += 1;
-                    }
-                    if (i < mod.Count)
-                    {
-                        for (int k = j; k < mod.Count; k++)
-                        {
-                            result.AddLine(mod[k], Color.Yellow);
-                        }
-                    }
+                    break;
                 }
             }
             return result;

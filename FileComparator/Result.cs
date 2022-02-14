@@ -13,6 +13,13 @@ namespace FileComparator
         private List<Color> ColorFont = new List<Color>();
 
         public int Count { get { return Line.Count; } }
+        public int OrgLinesCount { get; set; }                                                  //кол-во строк в оригинальном файле
+        public int ModLinesCount { get; set; }                                                  //кол-во строк в измененном файле
+        public int LinesUnchangedCount { get; set; }                                            //кол-во неизмененных строк
+        public int RemovalsCount { get; set; }                                                  //кол-во удаленных строк
+        public int AdditionsCount { get; set; }                                                 //кол-во добавленных строк
+        public int ChangesCount { get; set; }                                                   //кол-во измененных строк
+
 
         public void AddLine(string line, Color color)
         {
